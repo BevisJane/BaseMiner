@@ -53,7 +53,12 @@ export default function Home() {
   const [showWallets, setShowWallets] = useState(false);
   const [localSpark, setLocalSpark] = useState(false);
   const { address, chainId, isConnected } = useAccount();
-  const { connectors, connect, isPending: isConnecting } = useConnect();
+  const {
+    connectors,
+    connect,
+    error: connectError,
+    isPending: isConnecting,
+  } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const {
@@ -130,9 +135,13 @@ export default function Home() {
     return { rareCount, best };
   }, [items]);
 
+  const openWallets = () => {
+    setShowWallets(true);
+  };
+
   const mine = () => {
     if (!isConnected) {
-      setShowWallets(true);
+      openWallets();
       return;
     }
 
@@ -222,13 +231,15 @@ export default function Home() {
             onClick={mine}
             disabled={isMining || isConfirming || isSwitching}
           >
-            <Hammer size={22} />
+            {isConnected ? <Hammer size={22} /> : <Wallet size={22} />}
             <span>
-              {isMining || isConfirming
-                ? "Mining..."
-                : chainId && chainId !== base.id
-                  ? "Switch to Base"
-                  : "Mine Now"}
+              {!isConnected
+                ? "Connect Wallet"
+                : isMining || isConfirming
+                  ? "Mining..."
+                  : chainId && chainId !== base.id
+                    ? "Switch to Base"
+                    : "Mine Now"}
             </span>
           </button>
           {mineError ? <p className="error">{mineError.message}</p> : null}
@@ -326,25 +337,35 @@ export default function Home() {
               <h2>Connect to BaseMiner</h2>
             </div>
             <div className="wallet-list">
-              {visibleConnectors.map((connector) => (
-                <button
-                  key={connector.uid}
-                  disabled={isConnecting}
-                  onClick={() => {
-                    window.localStorage.removeItem(
-                      "baseminer:manual-disconnect"
-                    );
-                    connect(
-                      { connector, chainId: base.id },
-                      { onSuccess: () => setShowWallets(false) }
-                    );
-                  }}
-                >
-                  <Wallet size={18} />
-                  <span>{connector.name}</span>
-                </button>
-              ))}
+              {visibleConnectors.length ? (
+                visibleConnectors.map((connector) => (
+                  <button
+                    key={connector.uid}
+                    disabled={isConnecting}
+                    onClick={() => {
+                      window.localStorage.removeItem(
+                        "baseminer:manual-disconnect"
+                      );
+                      connect(
+                        { connector, chainId: base.id },
+                        { onSuccess: () => setShowWallets(false) }
+                      );
+                    }}
+                  >
+                    <Wallet size={18} />
+                    <span>{connector.name}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="wallet-help">
+                  No injected wallet was detected. Open BaseMiner inside
+                  Coinbase Wallet, MetaMask, OKX, or Base App.
+                </p>
+              )}
             </div>
+            {connectError ? (
+              <p className="error">{connectError.message}</p>
+            ) : null}
             <button className="ghost-button" onClick={() => setShowWallets(false)}>
               Close
             </button>
