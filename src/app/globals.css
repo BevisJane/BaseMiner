@@ -158,6 +158,7 @@ a {
   position: absolute;
   inset: 82px 0 196px;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .rope {
@@ -221,6 +222,7 @@ a {
 .ore-field {
   position: absolute;
   inset: 48% 0 0;
+  pointer-events: none;
 }
 
 .ore {
@@ -269,6 +271,7 @@ a {
 .reward-panel {
   position: absolute;
   inset: auto 14px 14px;
+  z-index: 6;
   display: grid;
   gap: 10px;
   padding: 16px;
@@ -297,6 +300,8 @@ a {
 }
 
 .mine-button {
+  position: relative;
+  z-index: 7;
   min-height: 58px;
   color: #21170e;
   font-size: 1.05rem;

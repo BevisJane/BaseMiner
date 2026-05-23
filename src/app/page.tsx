@@ -62,7 +62,7 @@ export default function Home() {
     isPending: isConnecting,
   } = useConnect();
   const { disconnect } = useDisconnect();
-  const { switchChainAsync, isPending: isSwitching } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
   const {
     writeContractAsync,
     data: hash,
@@ -244,8 +244,9 @@ export default function Home() {
           </p>
           <button
             className="mine-button"
+            type="button"
             onClick={mine}
-            disabled={isMining || isConfirming || isSwitching}
+            disabled={isMining || isConfirming}
           >
             {isConnected ? <Hammer size={22} /> : <Wallet size={22} />}
             <span>
