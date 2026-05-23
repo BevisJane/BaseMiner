@@ -310,6 +310,13 @@ a {
   word-break: break-word;
 }
 
+.status {
+  color: var(--leaf) !important;
+  font-size: 0.84rem;
+  font-weight: 700;
+  word-break: break-word;
+}
+
 .dashboard {
   display: grid;
   align-content: start;

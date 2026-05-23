@@ -52,6 +52,8 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [showWallets, setShowWallets] = useState(false);
   const [localSpark, setLocalSpark] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState("");
   const { address, chainId, isConnected } = useAccount();
   const {
     connectors,
@@ -60,9 +62,9 @@ export default function Home() {
     isPending: isConnecting,
   } = useConnect();
   const { disconnect } = useDisconnect();
-  const { switchChain, isPending: isSwitching } = useSwitchChain();
+  const { switchChainAsync, isPending: isSwitching } = useSwitchChain();
   const {
-    writeContract,
+    writeContractAsync,
     data: hash,
     isPending: isMining,
     error: mineError,
@@ -139,26 +141,40 @@ export default function Home() {
     setShowWallets(true);
   };
 
-  const mine = () => {
+  const mine = async () => {
+    setActionError("");
+
     if (!isConnected) {
+      setActionMessage("Connect a wallet to start mining.");
       openWallets();
       return;
     }
 
-    if (chainId !== base.id) {
-      switchChain({ chainId: base.id });
-      return;
-    }
+    try {
+      if (chainId && chainId !== base.id) {
+        setActionMessage("Requesting Base network switch...");
+        await switchChainAsync({ chainId: base.id });
+      }
 
-    setLocalSpark(true);
-    window.setTimeout(() => setLocalSpark(false), 800);
-    writeContract({
-      address: BASEMINER_CONTRACT_ADDRESS,
-      abi: BASEMINER_ABI,
-      functionName: "mine",
-      chainId: base.id,
-      dataSuffix: BUILDER_CODE_SUFFIX,
-    });
+      setActionMessage("Open your wallet and confirm the mine transaction.");
+      setLocalSpark(true);
+      window.setTimeout(() => setLocalSpark(false), 800);
+
+      const txHash = await writeContractAsync({
+        address: BASEMINER_CONTRACT_ADDRESS,
+        abi: BASEMINER_ABI,
+        functionName: "mine",
+        chainId: base.id,
+        dataSuffix: BUILDER_CODE_SUFFIX,
+      });
+
+      setActionMessage(`Transaction sent: ${formatAddress(txHash)}`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "The mine transaction failed.";
+      setActionError(message);
+      setActionMessage("");
+    }
   };
 
   const copyInvite = async () => {
@@ -242,7 +258,10 @@ export default function Home() {
                     : "Mine Now"}
             </span>
           </button>
-          {mineError ? <p className="error">{mineError.message}</p> : null}
+          {actionMessage ? <p className="status">{actionMessage}</p> : null}
+          {actionError || mineError ? (
+            <p className="error">{actionError || mineError?.message}</p>
+          ) : null}
         </div>
       </section>
 
